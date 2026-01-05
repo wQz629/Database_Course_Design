@@ -3,6 +3,11 @@
 -- Engine: InnoDB, Charset: utf8mb4
 -- =========================================
 
+-- 建立一个数据库
+CREATE DATABASE IF NOT EXISTS medicine_sales_management_system;
+USE medicine_sales_management_system;
+
+-- 设置数据库字符集为 utf8mb4
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
