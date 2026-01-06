@@ -1,8 +1,7 @@
 # Database_Course_Design
 
-数据库期末大作业
 
-## 环境搭建
+## 1. 环境搭建
 
 1. 创建虚拟环境
 
@@ -48,4 +47,22 @@ python -c "import PyQt6; import pymysql; print('库安装成功，可以开始�
 
 4.2 尝试运行 `test_gui.py`文件，能够成功打开PyQt6空窗口，那么说明环境搭建成功。
 
-5. Qt Designer 在 `.\venv\Lib\site-packages\qt6_applications\Qt\bin\designer.exe `
+## 2. 实际运行
+
+1. 确保MySQL能连接成功。如果在下面运行的时候，显示MySQL没连接，那可以打开 系统->服务->MYSQL80，右键点击MYSQL80，然后选择`启动`，等待服务启动完成。
+
+2. 在mysql命令行，运行`./sql`文件夹下的三个mysql脚本，创建数据库、表、数据。
+
+```
+mysql -u root -p
+source 换成你的实际路径/Database_Course_Design/sql/create_table.sql
+source 换成你的实际路径/Database_Course_Design/sql/create_trigger.sql
+source 换成你的实际路径/Database_Course_Design/sql/insert_test_data.sql
+```
+
+> 也可以在 MySQL workbench中运行，那就不需要写命令了，直接点击即可
+> 注意：建表的命令必须是最先执行
+
+3. 运行`main.py`文件，即可看到整个医药销售管理系统。
+
+> 如果无法运行，可以查看`logs`文件夹下的日志文件，排查错误。

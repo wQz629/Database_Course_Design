@@ -10,6 +10,7 @@ DELIMITER //
 -- 1. 供应商存在性校验
 -- 需求：插入入库单时，若供应商不存在，直接报错
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_check_supplier_exists //
 CREATE TRIGGER tri_check_supplier_exists
 BEFORE INSERT ON purchase_order
 FOR EACH ROW
@@ -27,6 +28,7 @@ END //
 -- 2. 进货药品存在性校验
 -- 需求：插入入库明细时，若药品不存在，直接报错
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_check_medicine_exists_purchase //
 CREATE TRIGGER tri_check_medicine_exists_purchase
 BEFORE INSERT ON purchase_detail
 FOR EACH ROW
@@ -45,6 +47,7 @@ END //
 -- 需求：入库明细插入后，自动更新库存表
 -- 逻辑：若inventory没有该药记录则初始化，若有则累加
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_purchase_add_stock //
 CREATE TRIGGER tri_purchase_add_stock
 AFTER INSERT ON purchase_detail
 FOR EACH ROW
@@ -66,6 +69,7 @@ END //
 -- 4. 客户存在性校验
 -- 需求：销售下单时，若客户不存在，报错提示
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_check_customer_exists //
 CREATE TRIGGER tri_check_customer_exists
 BEFORE INSERT ON sales_order
 FOR EACH ROW
@@ -83,6 +87,7 @@ END //
 -- 5. 销售扣减库存与超卖检查
 -- 需求：销售时检查库存，不足则拦截并报错
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_sales_reduce_stock //
 CREATE TRIGGER tri_sales_reduce_stock
 BEFORE INSERT ON sales_detail
 FOR EACH ROW
@@ -110,6 +115,7 @@ END //
 -- 6. 退货自动增加库存
 -- 需求：退货记录产生后，药库数量回升
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_return_add_stock //
 CREATE TRIGGER tri_return_add_stock
 AFTER INSERT ON sales_return_detail
 FOR EACH ROW
@@ -121,18 +127,18 @@ END //
 
 
 -- -------------------------
--- 7. 销售订单汇总统计
--- 需求：每成一笔单，自动在日汇总表累加金额和单数
+-- 7. 销售订单初始化统计
+-- 需求：插入主单时，初始化财务记录并累加订单数
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_sales_daily_update //
 CREATE TRIGGER tri_sales_daily_update
 AFTER INSERT ON sales_order
 FOR EACH ROW
 BEGIN
+    -- 初始金额设为 0，等待明细插入后由 Trigger 11 同步
     INSERT INTO sales_daily_summary (summary_date, total_sales_amount, net_amount, order_count)
-    VALUES (DATE(NEW.sales_date), NEW.total_amount, NEW.total_amount, 1)
+    VALUES (DATE(NEW.sales_date), 0.00, 0.00, 1)
     ON DUPLICATE KEY UPDATE
-        total_sales_amount = total_sales_amount + NEW.total_amount,
-        net_amount = net_amount + NEW.total_amount,
         order_count = order_count + 1;
 END //
 
@@ -141,22 +147,24 @@ END //
 -- 8. 退货汇总统计
 -- 需求：每发生退货，更新当日退货额和净额
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_return_daily_update //
 CREATE TRIGGER tri_return_daily_update
 AFTER INSERT ON sales_return
 FOR EACH ROW
 BEGIN
-    INSERT INTO sales_daily_summary (summary_date, total_return_amount, net_amount)
-    VALUES (DATE(NEW.return_date), 0.00, 0.00) -- 初始化当日记录（如果销售还没产生就有退货的话）
+    -- 使用 IFNULL 确保如果原始值为 NULL 时能正确相加（虽然我们定义了 DEFAULT 0，但这是双重保险）
+    INSERT INTO sales_daily_summary (summary_date, total_sales_amount, total_return_amount, net_amount, order_count)
+    VALUES (DATE(NEW.return_date), 0.00, NEW.total_amount, -NEW.total_amount, 0)
     ON DUPLICATE KEY UPDATE
-        total_return_amount = total_return_amount + NEW.total_amount,
-        net_amount = net_amount - NEW.total_amount;
+        total_return_amount = IFNULL(total_return_amount, 0) + NEW.total_amount,
+        net_amount = IFNULL(net_amount, 0) - NEW.total_amount;
 END //
-
 
 -- -------------------------
 -- 9. 自动计算入库单总价
 -- 逻辑：用户只需插入明细，主表的total_amount会自动累加，防止人工计算错误
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_calc_purchase_total //
 CREATE TRIGGER tri_calc_purchase_total
 AFTER INSERT ON purchase_detail
 FOR EACH ROW
@@ -171,6 +179,7 @@ END //
 -- 10. 自动计算销售单总价
 -- 逻辑：根据销售明细自动更新销售主单总金额
 -- -------------------------
+DROP TRIGGER IF EXISTS tri_calc_sales_total //
 CREATE TRIGGER tri_calc_sales_total
 AFTER INSERT ON sales_detail
 FOR EACH ROW
@@ -178,6 +187,58 @@ BEGIN
     UPDATE sales_order 
     SET total_amount = (SELECT SUM(quantity * unit_price) FROM sales_detail WHERE sales_id = NEW.sales_id)
     WHERE sales_id = NEW.sales_id;
+END //
+
+-- -------------------------
+-- 11. 销售金额实时同步汇总表 (核心新增)
+-- 需求：解决主单金额从 0 变更为实际总价后的同步问题
+-- -------------------------
+DROP TRIGGER IF EXISTS tri_sales_amount_sync //
+CREATE TRIGGER tri_sales_amount_sync
+AFTER UPDATE ON sales_order
+FOR EACH ROW
+BEGIN
+    -- 只有当总金额由于明细插入发生了变化时，才更新汇总表
+    IF OLD.total_amount <> NEW.total_amount THEN
+        UPDATE sales_daily_summary 
+        SET 
+            total_sales_amount = total_sales_amount - OLD.total_amount + NEW.total_amount,
+            net_amount = net_amount - OLD.total_amount + NEW.total_amount
+        WHERE summary_date = DATE(NEW.sales_date);
+    END IF;
+END //
+
+DELIMITER //
+
+-- -------------------------
+-- 12. 销售退货删除同步
+-- 需求：如果删除了退货单，财务统计表要补回金额，库存要重新扣减
+-- -------------------------
+DROP TRIGGER IF EXISTS tri_sales_return_delete_sync //
+CREATE TRIGGER tri_sales_return_delete_sync
+AFTER DELETE ON sales_return
+FOR EACH ROW
+BEGIN
+    UPDATE sales_daily_summary 
+    SET total_return_amount = total_return_amount - OLD.total_amount,
+        net_amount = net_amount + OLD.total_amount
+    WHERE summary_date = DATE(OLD.return_date);
+END //
+
+-- -------------------------
+-- 13. 销售订单删除同步
+-- 需求：如果删除了销售单，财务统计表要减去金额和订单数
+-- -------------------------
+DROP TRIGGER IF EXISTS tri_sales_order_delete_sync //
+CREATE TRIGGER tri_sales_order_delete_sync
+AFTER DELETE ON sales_order
+FOR EACH ROW
+BEGIN
+    UPDATE sales_daily_summary 
+    SET total_sales_amount = total_sales_amount - OLD.total_amount,
+        net_amount = net_amount - OLD.total_amount,
+        order_count = order_count - 1
+    WHERE summary_date = DATE(OLD.sales_date);
 END //
 
 DELIMITER ;

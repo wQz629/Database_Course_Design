@@ -20,11 +20,12 @@ class MedicineDAO(BaseDAO):
             cursor.execute("SELECT * FROM medicine WHERE medicine_id = %s", (m_id,))
             return cursor.fetchone()
 
-    def add(self, data):
-        """data: tuple (id, name, cat, spec, manu, p_date, e_date, price, desc)"""
+    def add(self, m_id, name, cat, spec, manu, p_date, e_date, price, desc):
+        """现在接收 9 个明确的参数"""
         with self.db.session() as cursor:
             sql = "INSERT INTO medicine VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            cursor.execute(sql, data)
+            # 将这些参数打包成元组交给 pymysql 执行
+            cursor.execute(sql, (m_id, name, cat, spec, manu, p_date, e_date, price, desc))
 
     def update(self, m_id, data_dict):
         """data_dict: 包含要更新的字段及其值"""
@@ -223,6 +224,31 @@ class SalesDAO(BaseDAO):
         """
         with self.db.session() as cursor:
             cursor.execute(sql, (sales_id,))
+            return cursor.fetchall()
+        
+    def get_return_history(self):
+        """查询所有退货记录"""
+        sql = """
+            SELECT r.*, c.cust_name, e.emp_name 
+            FROM sales_return r
+            JOIN customer c ON r.cust_id = c.cust_id
+            JOIN employee e ON r.emp_id = e.emp_id
+            ORDER BY r.return_date DESC
+        """
+        with self.db.session() as cursor:
+            cursor.execute(sql)
+            return cursor.fetchall()
+
+    def get_return_details(self, return_id):
+        """查询某一退货单的药品明细"""
+        sql = """
+            SELECT rd.medicine_id, m.medicine_name, rd.return_quantity
+            FROM sales_return_detail rd
+            JOIN medicine m ON rd.medicine_id = m.medicine_id
+            WHERE rd.return_id = %s
+        """
+        with self.db.session() as cursor:
+            cursor.execute(sql, (return_id,))
             return cursor.fetchall()
 
     def register_sale(self, sales_id, cust_id, emp_id, remark, items):

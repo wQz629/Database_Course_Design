@@ -4,6 +4,7 @@
 -- =========================================
 
 -- 建立一个数据库
+DROP DATABASE IF EXISTS medicine_sales_management_system;
 CREATE DATABASE IF NOT EXISTS medicine_sales_management_system;
 USE medicine_sales_management_system;
 
