@@ -49,6 +49,8 @@ python -c "import PyQt6; import pymysql; print('库安装成功，可以开始�
 
 ## 2. 实际运行
 
+> 特别提醒，在实际运行前，需要修改`config.ini`文件中的数据库配置（如：user、password、host、port等信息），否则无法连接数据库。
+
 1. 确保MySQL能连接成功。如果在下面运行的时候，显示MySQL没连接，那可以打开 系统->服务->MYSQL80，右键点击MYSQL80，然后选择`启动`，等待服务启动完成。
 
 2. 在mysql命令行，运行`./sql`文件夹下的三个mysql脚本，创建数据库、表、数据。

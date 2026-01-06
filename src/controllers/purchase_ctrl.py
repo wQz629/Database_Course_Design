@@ -1,6 +1,6 @@
 # src/controllers/purchase_ctrl.py
 from src.database.dao import PurchaseDAO
-from src.utils.logger import logger  # 导入日志模块
+from src.utils.logger import logger 
 from pymysql import MySQLError
 
 class PurchaseController:
@@ -36,7 +36,6 @@ class PurchaseController:
             return False, f"系统异常：{str(e)}"
 
     # --- 查询相关函数 ---
-
     def get_purchase_history(self):
         """获取所有进货主单列表"""
         logger.debug("正在请求进货历史列表...")

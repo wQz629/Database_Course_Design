@@ -5,8 +5,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QFont, QIcon
 
-# 导入各个功能模块页面 (假设你已经在 modules 文件夹下创建了这些类)
-# 如果还没写好具体页面，可以先用后面提供的简易占位类
+# 导入各个功能模块页面 
 from src.ui.modules.base_info import BaseInfoPage
 from src.ui.modules.purchase import PurchasePage
 from src.ui.modules.inventory import InventoryPage

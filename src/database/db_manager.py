@@ -26,7 +26,7 @@ class DBManager:
 
     @contextmanager
     def session(self):
-        """上下文管理器代码保持不变..."""
+        """上下文管理器"""
         conn = None
         try:
             conn = pymysql.connect(
@@ -51,7 +51,7 @@ class DBManager:
                 conn.close()
 
     def execute_with_error_handle(self, func, *args, **kwargs):
-        """保持不变..."""
+        """异常处理的通用函数"""
         try:
             result = func(*args, **kwargs)
             return True, result

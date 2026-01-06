@@ -1,6 +1,6 @@
 # src/controllers/inventory_ctrl.py
 from src.database.dao import InventoryDAO
-from src.utils.logger import logger  # 导入日志模块
+from src.utils.logger import logger  
 from pymysql import MySQLError
 
 class InventoryController:

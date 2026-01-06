@@ -223,7 +223,7 @@ class PurchasePage(QWidget):
         layout.addWidget(QLabel("提示：双击行可查看该订单的药品明细"))
 
     def refresh_history(self):
-        # 核心修改：接收元组 (success, data)
+        # 接收元组 (success, data)
         success, data = self.p_ctrl.get_purchase_history()
         
         if not success:
@@ -247,7 +247,7 @@ class PurchasePage(QWidget):
         if row < 0: return
         order_id = self.history_table.item(row, 0).text()
         
-        # 核心修改：解包元组
+        # 解包元组
         success, items = self.p_ctrl.get_order_details(order_id)
         if success:
             dialog = PurchaseDetailDialog(order_id, items)

@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QTableWidgetItem, QPushButton, QLabel, QHeaderView, 
                              QTabWidget, QMessageBox, QGroupBox, QGridLayout, QComboBox)
 from PyQt6.QtCore import Qt, QDate
-from PyQt6.QtGui import QFont, QColor # 统一放在顶部
+from PyQt6.QtGui import QFont, QColor 
 from src.controllers.finance_ctrl import FinanceController
 
 class StatisticsPage(QWidget):
@@ -26,7 +26,7 @@ class StatisticsPage(QWidget):
         self.tabs.addTab(self.tab_daily, "日销售统计流水")
         self.tabs.addTab(self.tab_monthly, "月度经营报表")
         
-        # 优化：切换到“日统计”标签时自动刷新数据
+        # 切换到“日统计”标签时自动刷新数据
         self.tabs.currentChanged.connect(self.on_tab_changed)
         
         layout.addWidget(self.tabs)

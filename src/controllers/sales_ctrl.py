@@ -1,6 +1,6 @@
 # src/controllers/sales_ctrl.py
 from src.database.dao import SalesDAO
-from src.utils.logger import logger  # 导入日志模块
+from src.utils.logger import logger 
 from pymysql import MySQLError
 
 class SalesController:
@@ -53,7 +53,6 @@ class SalesController:
             return False, str(e)
 
     # --- 查询相关函数 ---
-
     def get_history(self):
         """获取所有历史销售主单列表"""
         logger.debug("请求销售历史列表...")

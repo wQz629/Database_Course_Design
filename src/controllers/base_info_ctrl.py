@@ -1,6 +1,6 @@
 # src/controllers/base_info_ctrl.py
 from src.database.dao import MedicineDAO, EmployeeDAO, CustomerDAO, SupplierDAO
-from src.utils.logger import logger  # 导入日志模块
+from src.utils.logger import logger  
 from pymysql import MySQLError
 
 class BaseInfoController:
@@ -44,7 +44,7 @@ class BaseInfoController:
     def delete_medicine(self, m_id):
         try:
             self.medicine_dao.delete(m_id)
-            # 删除属于敏感操作，建议记录为 WARNING
+            # 删除属于敏感操作，记录为 WARNING
             logger.warning(f"数据删除 | 管理员删除了药品: {m_id}")
             return True, "删除成功"
         except MySQLError:

@@ -2,7 +2,7 @@ import sys
 import traceback
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from src.ui.main_window import MainWindow
-from src.utils.logger import logger  # 导入日志模块
+from src.utils.logger import logger  
 
 def global_exception_handler(exc_type, exc_value, exc_traceback):
     """
@@ -41,7 +41,6 @@ def main():
     try:
         app = QApplication(sys.argv)
         
-        # 这里可以根据需要设置全局样式
         app.setStyle("Fusion") 
         logger.debug("已设置 UI 样式为 Fusion")
 
