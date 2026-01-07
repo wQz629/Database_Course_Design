@@ -1,0 +1,51 @@
+DATABASE_COURSE_DESIGN/             # 项目根目录
+├── main.py                         # 核心入口：配置全局异常钩子、初始化App、启动主窗口
+├── config.ini                      # 外部配置文件：数据库连接参数（实现代码与配置解耦）
+├── requirements.txt                # 依赖清单：项目所需第三方库（PyQt6, PyMySQL, cryptography等）
+├── .gitignore                      # Git忽略文件：排除虚拟环境(venv)和日志(logs)
+│
+├── sql/                            # 数据库脚本目录
+│   ├── create_table.sql            # 数据库建表语句（DDL）
+│   ├── create_trigger.sql          # 核心业务逻辑触发器（11个触发器，含金额同步修正）
+│   └── insert_test_data.sql        # 演示专用数据脚本（进销存退全流程模拟数据）
+│
+├── logs/                           # 运行日志目录（由程序运行后自动生成）
+│   └── app.log                     # 全量运行日志：按天滚动记录系统操作与异常回溯
+│
+└── src/                            # 源代码核心包
+    ├── __init__.py                 # 源代码包初始化声明
+    │
+    ├── database/                   # 数据库持久层（Database Layer）
+    │   ├── __init__.py             # 暴露接口，简化导入路径
+    │   ├── db_manager.py           # 数据库管理：单例模式实现、上下文管理器及异常自动记录
+    │   └── dao.py                  # 数据访问对象：封装各模块具体的 SQL 执行逻辑
+    │
+    ├── controllers/                # 业务逻辑层（Controller Layer）
+    │   ├── __init__.py             
+    │   ├── base_info_ctrl.py       # 基础资料控制：处理药品、员工、客户、供应商的CRUD逻辑
+    │   ├── purchase_ctrl.py        # 进货控制：处理采购入库、明细查询及单据入账
+    │   ├── inventory_ctrl.py       # 库存控制：处理库存实时监控、低库存自动扫描预警
+    │   ├── sales_ctrl.py           # 销售控制：处理前台收银、退货办理及业务拦截逻辑
+    │   └── finance_ctrl.py         # 财务控制：处理财务日结流水与月度经营报表统计
+    │
+    ├── ui/                         # 界面展示层（UI Layer）
+    │   ├── __init__.py             
+    │   ├── main_window.py          # 主窗口：采用侧边导航栏 + QStackedWidget 的多页面架构
+    │   ├── modules/                # 各功能模块的具体交互页面
+    │   │   ├── base_info.py        # 基础资料管理页：采用配置化 Tab 页展示四张基础表
+    │   │   ├── purchase.py         # 进货管理页：实现入库单录入流程与历史明细穿透查询
+    │   │   ├── inventory.py        # 库存管理页：展示实时库存表及红色低库存预警提示
+    │   │   ├── sales.py            # 销售管理页：实现前台收银、流水查询及退货弹窗交互
+    │   │   └── statistics.py       # 财务统计页：展示日销售流水及月度经营关键指标看板
+    │   └── widgets/                # 自定义可重用 UI 组件
+    │       ├── __init__.py
+    │       └── base_data_tab.py    # 通用管理组件：封装了“查询、表格、增删改查”的重用逻辑
+    │
+    ├── utils/                      # 基础工具工具类
+    │   ├── __init__.py
+    │   ├── logger.py               # 日志记录工具：实现 TimedRotatingFileHandler 滚动存储
+    │   └── config_loader.py        # 配置加载工具：实现 config.ini 动态解析与路径适配
+    │
+    └── assets/                     # 静态资源目录
+        ├── icons/                  # 系统界面图标资源
+        └── styles.qss               # 全局样式方案：基于 QSS 的界面美化与视觉统一处理
